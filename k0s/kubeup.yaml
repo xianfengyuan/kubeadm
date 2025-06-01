@@ -1,0 +1,103 @@
+---
+- name: installing k0s
+  hosts: controlplane
+  tags:
+  - primary
+  become: yes # Run as sudo
+  tasks:
+    - name: Check if k0s is already installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/k0s
+      register: k0s_bin
+
+    - name: Install k0s using the official installation script
+      ansible.builtin.shell: |
+        curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sh
+      args:
+        executable: /bin/bash
+      when: not k0s_bin.stat.exists
+
+    - name: verify
+      command: k0s version
+      register: kube_output
+      changed_when: false
+      
+    - name: debug
+      debug:
+        msg: "{{ kube_output }}"
+
+    - name: check if config exists
+      ansible.builtin.stat:
+        path: /etc/k0s/k0s.yaml
+      register: k0s_conf
+
+    - name: Bootstrap a controller node
+      ansible.builtin.shell: |
+        mkdir -p /etc/k0s
+        k0s config create > /etc/k0s/k0s.yaml
+        k0s install controller -c /etc/k0s/k0s.yaml
+        k0s start
+      args:
+        executable: /bin/bash
+      when: not k0s_conf.stat.exists
+
+    - name: verify_k0s
+      command: k0s status
+      register: k0s_output
+      changed_when: false
+      
+    - name: debug_k0s
+      debug:
+        msg: "{{ k0s_output }}"
+
+    - name: Create a join token
+      command: k0s token create --role=worker
+      register: join_token
+    
+    - set_fact:
+        shared_output: "{{ join_token.stdout }}"
+      delegate_to: localhost
+      delegate_facts: True
+
+- name: install k0s worker
+  hosts: worker
+  tags:
+  - worker
+  become: yes
+
+  tasks:        
+    - name: Check if k0s is already installed
+      ansible.builtin.stat:
+        path: /usr/local/bin/k0s
+      register: k0s_bin
+
+    - name: Install k0s using the official installation script
+      ansible.builtin.shell: |
+        curl --proto '=https' --tlsv1.2 -sSf https://get.k0s.sh | sh
+      args:
+        executable: /bin/bash
+      when: not k0s_bin.stat.exists
+
+    - name: check if token exists
+      ansible.builtin.stat:
+        path: /etc/k0s/k0s_token
+      register: k0s_token
+
+    - name: Bootstrap a worker node
+      ansible.builtin.shell: |
+        mkdir -p /etc/k0s
+        echo "{{ hostvars['localhost'].shared_output }}" > /etc/k0s/k0s_token
+        k0s install worker --token-file /etc/k0s/k0s_token
+        k0s start
+      args:
+        executable: /bin/bash
+      when: not k0s_token.stat.exists
+
+    - name: verify_worker
+      command: k0s status
+      register: k0s_worker
+      changed_when: false
+      
+    - name: debug_k0s
+      debug:
+        msg: "{{ k0s_worker }}"
