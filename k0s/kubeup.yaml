@@ -101,3 +101,22 @@
     - name: debug_k0s
       debug:
         msg: "{{ k0s_worker }}"
+
+- name: installing k0s
+  hosts: controlplane
+  tags:
+  - primary
+  become: yes # Run as sudo
+  tasks:
+    - name: check if kubernetes config exists
+      ansible.builtin.stat:
+        path: /var/lib/k0s/pki/admin.conf
+      register: kube_conf
+
+    - name: show the kubernetes configuration
+      command: cat /var/lib/k0s/pki/admin.conf
+      register: kube_out
+      when: kube_conf.stat.exists
+
+    - debug:
+        msg: "{{ kube_out }}"
