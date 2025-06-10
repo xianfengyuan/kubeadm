@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-NUM_WORKER_NODES=2
+NUM_WORKER_NODES=1
 MEM_GB=$(( $(sysctl hw.memsize | cut -d ' ' -f 2) /  1073741824 ))
 
 [ $MEM_GB -lt 16 ] && NUM_WORKER_NODES=1
