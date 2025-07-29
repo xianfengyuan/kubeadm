@@ -38,8 +38,8 @@ fi
 NUM_WORKER_NODES=1
 MEM_GB=$(( $(sysctl hw.memsize | cut -d ' ' -f 2) /  1073741824 ))
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/scripts
-VM_MEM_GB=2.5G
-VM_DISK_GB=20G
+VM_MEM_GB=8G
+VM_DISK_GB=50G
 
 if [ $MEM_GB -lt 8 ]
 then

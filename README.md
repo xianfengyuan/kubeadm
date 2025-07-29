@@ -5,6 +5,12 @@ This folder holds the script to bootstrap a kubernetes cluster on MAC m3 machine
 2. Customize the kernel settings of the VMs.
 3. Use kubeadm to provision 3 node cluster.
 
+## How to copy kubectl configuration
+
+```
+multipass transfer controlplane:.kube/config ~/.kube/config
+```
+
 # k0s
 This folder holds the ansible playbook to bootstrap a k0s cluster
 
