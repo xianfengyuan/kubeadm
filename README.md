@@ -45,6 +45,13 @@ kubectl apply -f fibs-app_app.yaml
 argocd app list
 ```
 
+## Useful kubernetes commands
+
+```
+kubectl run bb --image=curlimages/curl --rm -it -- sh
+
+```
+
 # k0s
 
 ```
